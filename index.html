@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pogodi broj</title>
+<meta name="description" content="Mala igrica: pogodi zamišljeni broj od 1 do 100.">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #ffffff;
+    --text: #1f1d1a;
+    --muted: #6b665e;
+    --line: #e2ddd3;
+    --accent: #2f6fdb;
+    --accent-text: #ffffff;
+    --up: #2a9d6f;
+    --down: #d9572b;
+    --warn: #b7791f;
+    --range: #dbe6fb;
+    --track: #eeeae2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171c;
+      --card: #1f222a;
+      --text: #ecebe8;
+      --muted: #9a978f;
+      --line: #2e323c;
+      --accent: #6a9cf5;
+      --accent-text: #0e1220;
+      --up: #4cc795;
+      --down: #f08a5d;
+      --warn: #e2b04a;
+      --range: #2b3d61;
+      --track: #2a2e37;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  main {
+    width: 100%;
+    max-width: 440px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
+  }
+  h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: -0.02em; }
+  .sub { margin: 0 0 24px; color: var(--muted); }
+
+  .between { margin: 0 0 8px; font-size: 15px; color: var(--muted); }
+  .between b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .track {
+    position: relative;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--track);
+    overflow: hidden;
+  }
+  .fill {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 0; width: 100%;
+    background: var(--range);
+    border-radius: 999px;
+    transition: left .35s ease, width .35s ease, background .35s ease;
+  }
+  .ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 4px 2px 20px;
+  }
+
+  form { display: flex; gap: 8px; }
+  input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 20px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 0;
+    background: var(--accent);
+    color: var(--accent-text);
+    cursor: pointer;
+  }
+  button:disabled, input:disabled { opacity: .5; cursor: default; }
+  button.secondary {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .msg {
+    min-height: 48px;
+    margin: 16px 0;
+    font-size: 17px;
+    line-height: 1.4;
+  }
+  .msg.up { color: var(--up); }
+  .msg.down { color: var(--down); }
+  .msg.warn { color: var(--warn); }
+  .msg.win { color: var(--up); font-weight: 700; animation: pop .4s ease; }
+  @keyframes pop {
+    0% { transform: scale(.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stats div {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .stats span { display: block; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stats small { color: var(--muted); }
+
+  .history {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0;
+    margin: 16px 0 0;
+  }
+  .history li {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--line);
+  }
+  .history li.up { color: var(--up); }
+  .history li.down { color: var(--down); }
+  .history li.win { color: var(--accent-text); background: var(--up); border-color: var(--up); }
+
+  footer { margin-top: 16px; font-size: 13px; color: var(--muted); text-align: center; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pogodi broj</h1>
+  <p class="sub">Zamišljen je broj od 1 do 100. Koliko ti treba pokušaja?</p>
+
+  <p class="between">Broj je između <b id="low">1</b> i <b id="high">100</b></p>
+  <div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
+  <div class="ends" aria-hidden="true"><span>1</span><span>100</span></div>
+
+  <form id="form" autocomplete="off">
+    <input id="guess" type="number" inputmode="numeric" min="1" max="100" placeholder="Upiši broj" aria-label="Tvoj broj">
+    <button id="submit" type="submit">Pogađaj</button>
+  </form>
+
+  <p id="msg" class="msg" role="status" aria-live="polite">Savjet: kreni od 50.</p>
+
+  <div class="stats">
+    <div><span id="tries">0</span><small>Pokušaji</small></div>
+    <div><span id="best">–</span><small>Najbolji rezultat</small></div>
+  </div>
+
+  <ul id="history" class="history" aria-label="Tvoji pokušaji"></ul>
+
+  <button id="again" class="secondary" type="button" hidden>Nova igra</button>
+</main>
+<footer>Kod je na <a href="https://github.com/ivan08012/pogodi-broj">GitHubu</a></footer>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const BEST_KEY = 'pogodi-broj-najbolje';
+
+  function loadBest() {
+    try {
+      const v = parseInt(localStorage.getItem(BEST_KEY), 10);
+      return Number.isFinite(v) ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function saveBest(v) {
+    try { localStorage.setItem(BEST_KEY, String(v)); } catch (e) {}
+  }
+
+  let secret, low, high, tries, done;
+  let best = loadBest();
+
+  function setMsg(text, kind) {
+    const m = $('msg');
+    m.textContent = text;
+    m.className = 'msg' + (kind ? ' ' + kind : '');
+  }
+
+  function render() {
+    $('tries').textContent = tries;
+    $('best').textContent = best === null ? '–' : best;
+    $('low').textContent = low;
+    $('high').textContent = high;
+    $('fill').style.left = (low - 1) + '%';
+    $('fill').style.width = (high - low + 1) + '%';
+    $('fill').style.background = done ? 'var(--up)' : '';
+  }
+
+  function addChip(n, kind) {
+    const li = document.createElement('li');
+    li.className = kind;
+    li.textContent = n + (kind === 'up' ? ' ↑' : kind === 'down' ? ' ↓' : ' ✓');
+    $('history').appendChild(li);
+  }
+
+  function newGame() {
+    secret = Math.floor(Math.random() * 100) + 1;
+    low = 1;
+    high = 100;
+    tries = 0;
+    done = false;
+    $('history').innerHTML = '';
+    $('again').hidden = true;
+    $('guess').disabled = false;
+    $('submit').disabled = false;
+    $('guess').value = '';
+    setMsg('Savjet: kreni od 50.', '');
+    render();
+    $('guess').focus();
+  }
+
+  $('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (done) return;
+
+    const n = Number($('guess').value);
+    if (!Number.isInteger(n) || n < 1 || n > 100) {
+      setMsg('Upiši cijeli broj od 1 do 100.', 'warn');
+      return;
+    }
+    if (n < low || n > high) {
+      setMsg('Taj broj otpada, traženi broj je između ' + low + ' i ' + high + '.', 'warn');
+      $('guess').select();
+      return;
+    }
+
+    tries++;
+    if (n === secret) {
+      done = true;
+      low = high = n;
+      const newBest = best === null || tries < best;
+      if (newBest) { best = tries; saveBest(best); }
+      const how = tries === 1 ? 'iz prvog pokušaja!' : 'iz ' + tries + ' pokušaja.';
+      setMsg('Bravo! Broj je ' + n + ', pogođen ' + how + (newBest ? ' Novi rekord!' : ''), 'win');
+      addChip(n, 'win');
+      $('guess').disabled = true;
+      $('submit').disabled = true;
+      $('again').hidden = false;
+      $('again').focus();
+    } else if (n < secret) {
+      low = n + 1;
+      setMsg('Više! Broj je veći od ' + n + '.', 'up');
+      addChip(n, 'up');
+    } else {
+      high = n - 1;
+      setMsg('Manje! Broj je manji od ' + n + '.', 'down');
+      addChip(n, 'down');
+    }
+    render();
+    if (!done) { $('guess').value = ''; $('guess').focus(); }
+  });
+
+  $('again').addEventListener('click', newGame);
+  newGame();
+</script>
+</body>
+</html>
